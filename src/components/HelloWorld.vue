@@ -11,10 +11,12 @@
       <el-container>
         <el-aside width="300px">
           <span class="inputData">
+            <span>描点坐标：</span>
             <el-radio v-model="dataType" label="str">字符串</el-radio>
             <el-radio v-model="dataType" label="num">数字</el-radio>
           </span>
           <span class="inputData">
+            <span>图片数据：</span>
             <el-radio v-model="imgType" label="img">上传图片</el-radio>
             <el-radio v-model="imgType" label="base64">base64</el-radio>
           </span>
@@ -27,6 +29,7 @@
               :placeholder='placeHoledr'
               type="textarea"
               :rows="4"
+              v-model="pointStr"
             ></el-input>
             <div
               v-else
@@ -45,11 +48,18 @@
               placeholder='base64数据'
               type="textarea"
               :rows="4"
+              v-model="imgBase64"
             ></el-input>
             <div
               v-else
               class="usefulData">
-              <input type="file" onchange="drawImg(this.files)" accept="image/*">
+              <input type="file" @change="saveImg(this.files)" accept="image/*">
+            </div>
+          </div>
+          <div class="childCo">
+            <el-button type="primary" @click="drawBegin">开始绘制</el-button>
+            <div ref="imgContainer">
+
             </div>
           </div>
         </el-main>
@@ -68,12 +78,55 @@ export default {
       dataType: 'str',
       imgType: 'base64',
       pointData: [{ x: '', y: '' }],
+      pointStr: '',
+      imgBase64: '',
+      img: null,
     };
   },
   methods: {
+    saveImg(data) {
+      this.img = data;
+    },
     addPoint() {
       if (this.pointData.length < 4) {
         this.pointData.push({ x: '', y: '' });
+      }
+    },
+    handleClick() {},
+    drawBegin() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      let pointData = [];
+      if (this.dataType === 'str') {
+        pointData = this.pointStr.split(',');
+      } else {
+        console.log(this.pointData);
+        this.pointData.forEach((value) => {
+          pointData.push(value.x);
+          pointData.push(value.y);
+        });
+      }
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0, img.width, img.height);
+        pointData.forEach((value, index) => {
+          if (index % 2 === 0) {
+            ctx.beginPath();
+            ctx.arc(Number(pointData[index]), Number(pointData[index + 1]), 5, 0, 2 * Math.PI, true);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+          }
+        });
+        this.$refs.imgContainer.innerHTML = `<img src=${canvas.toDataURL('image/png', 1)}>`;
+      };
+
+
+      if (this.imgType === 'base64') {
+        img.src = this.imgBase64;
+      } else {
+        img.src = URL.createObjectURL(this.img[0]);
       }
     },
   },
@@ -90,7 +143,6 @@ export default {
 }
 .fen{
   height: 30px;
-
   margin-bottom: 10px;
 }
 .usefulData{
@@ -100,6 +152,8 @@ export default {
   margin-left: 20px;
   height: 150px;
   display: inline-block;
+  width: 280px;
+  text-align: left;
 }
 .inputNum{
   width: 100px;
