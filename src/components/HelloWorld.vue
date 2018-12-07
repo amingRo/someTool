@@ -77,7 +77,7 @@
             <div
               v-else
               class="usefulData">
-                
+
 
             </div>
           </div>
