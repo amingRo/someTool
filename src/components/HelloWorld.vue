@@ -30,48 +30,6 @@
         <el-main>
           <p class="inputData">
             <span>
-              <span>描点坐标：</span>
-              <el-radio
-                v-model="dataType"
-                label="str">字符串</el-radio>
-              <el-radio
-                v-model="dataType"
-                label="num">数字</el-radio>
-              <el-button
-                v-show="dataType === 'num'"
-                @click="addPoint"
-                size="mini"
-                type="primary"
-                class="addPoint">新增坐标</el-button>
-            </span>
-          </p>
-          <div class="childCo">
-            <el-input
-              v-if="dataType==='str'"
-              class="usefulData"
-              :placeholder='placeHoledr'
-              type="textarea"
-              :rows="4"
-              v-model="pointStr"
-            ></el-input>
-            <div
-              v-else
-              class="usefulData">
-              <p
-                class="pointCon"
-                v-for="(point,index) in pointData"
-                :key="index">
-              <el-input :value="point.x">
-                <template slot="prepend">X</template>
-              </el-input>
-              <el-input :value="point.y">
-                <template slot="prepend">Y</template>
-              </el-input>
-              </p>
-            </div>
-          </div>
-          <p class="inputData">
-            <span>
               <span>图片数据：</span>
               <el-radio
                 v-model="imgType"
@@ -99,6 +57,49 @@
                 accept="image/*">
             </div>
           </div>
+          <p class="inputData">
+            <span>
+              <span>描点坐标：</span>
+              <el-radio
+                v-model="dataType"
+                label="str">字符串</el-radio>
+              <el-radio
+                v-model="dataType"
+                label="num">数字</el-radio>
+              <el-button
+                v-show="dataType === 'num' && activeIndex1==='1'"
+                @click="addPoint"
+                size="mini"
+                type="primary"
+                class="addPoint">新增坐标</el-button>
+            </span>
+          </p>
+          <div class="childCo">
+            <el-input
+              v-if="dataType==='str'"
+              class="usefulData"
+              :placeholder='placeHoledr'
+              type="textarea"
+              :rows="4"
+              v-model="pointStr"
+            ></el-input>
+            <div
+              v-else
+              class="usefulData">
+              <p
+                class="pointCon"
+                v-for="(point,index) in pointData"
+                :key="index">
+              <el-input v-model="point.x">
+                <template slot="prepend">X</template>
+              </el-input>
+              <el-input v-model="point.y">
+                <template slot="prepend">Y</template>
+              </el-input>
+              </p>
+            </div>
+          </div>
+
           <p class="inputData">
             <span>
               <span>生成图片</span>
@@ -165,7 +166,7 @@ export default {
       imgBase64: '', // 图片的base64
       img: null, // 上传的图片数据
       penColor: 'red', // 画笔颜色
-      penWidth: 1// 画笔粗细
+      penWidth: 3// 画笔粗细
     };
   },
   methods: {
@@ -176,9 +177,22 @@ export default {
      */
     handleSelect(index) {
       this.activeIndex1 = index;
-      if (index === '2') {
-        if (this.pointData.length > 2) {
-          this.pointData.splice(2, this.pointData.length - 2);
+      switch (index) {
+        case '2':
+          if (this.pointData.length > 2) {
+            this.pointData.splice(2, this.pointData.length - 2);
+          } else if (this.pointData.length < 2) {
+            this.pointData.push({ x: '', y: '' });
+          }
+          break;
+        case '3':
+          if (this.pointData.length < 4) {
+            do {
+              this.pointData.push({ x: '', y: '' });
+            } while (this.pointData.length < 4);
+          } break;
+        default: {
+          this.pointData.splice(1, this.pointData.length - 1);
         }
       }
     },
@@ -196,13 +210,7 @@ export default {
      * @returns.
      */
     addPoint() {
-      if (this.activeIndex1 === '2') {
-        if (this.pointData.length < 2) {
-          this.pointData.push({ x: '', y: '' });
-        } else {
-          this.$message.warning('画线最多输入2个点！');
-        }
-      } else if (this.pointData.length < 4) {
+      if (this.pointData.length < 4) {
         this.pointData.push({ x: '', y: '' });
       } else {
         this.$message.warning('最多输入4个点！');
@@ -231,37 +239,42 @@ export default {
         canvas.height = img.height;
         ctx.drawImage(img, 0, 0, img.width, img.height);
         pointData.forEach((value, index) => {
-          if (this.activeIndex1 === '1') {
-            if (index % 2 === 0) {
-              ctx.beginPath();
-              ctx.arc(Number(pointData[index]), Number(pointData[index + 1]), 5, 0, 2 * Math.PI, true);
-              ctx.fillStyle = 'red';
-              ctx.fill();
-            }
-          } else if (this.activeIndex1 === '2') {
-            if (index % 4 === 0) {
-              ctx.beginPath();
-              ctx.strokeStyle = 'red';
-              ctx.lineWidth = 5;
-              ctx.moveTo(pointData[index], pointData[index + 1]);
-              ctx.lineTo(pointData[index + 2], pointData[index + 3]);
-              ctx.closePath();
-              ctx.stroke();
-            }
-          } else if (this.activeIndex1 === '3') {
-            if (index % 4 === 0) {
-              ctx.beginPath();
-              ctx.strokeStyle = 'red';
-              ctx.lineWidth = 5;
-              ctx.moveTo(pointData[index], pointData[index + 1]);
-              ctx.lineTo(pointData[index + 2], pointData[index + 3]);
-              ctx.closePath();
-              ctx.stroke();
+          switch (this.activeIndex1) {
+            case '1':
+              if (index % 2 === 0) {
+                ctx.beginPath();
+                ctx.arc(Number(pointData[index]), Number(pointData[index + 1]), this.penWidth, 0, 2 * Math.PI, true);
+                ctx.fillStyle = this.penColor;
+                ctx.fill();
+              }
+              break;
+            case '2':
+              if (index % 4 === 0) {
+                ctx.beginPath();
+                ctx.strokeStyle = this.penColor;
+                ctx.lineWidth = this.penWidth;
+                ctx.moveTo(Number(pointData[index]), Number(pointData[index + 1]));
+                ctx.lineTo(Number(pointData[index + 2]), Number(pointData[index + 3]));
+                ctx.closePath();
+                ctx.stroke();
+              }
+              break;
+            default: {
+              if (index % 8 === 0) {
+                ctx.beginPath();
+                ctx.strokeStyle = this.penColor;
+                ctx.lineWidth = this.penWidth;
+                ctx.moveTo(Number(pointData[index]), Number(pointData[index + 1]));
+                ctx.lineTo(Number(pointData[index + 2]), Number(pointData[index + 3]));
+                ctx.lineTo(Number(pointData[index + 4]), Number(pointData[index + 5]));
+                ctx.lineTo(Number(pointData[index + 6]), Number(pointData[index + 7]));
+                ctx.closePath();
+                ctx.stroke();
+              }
             }
           }
         });
         this.imgData = canvas.toDataURL('image/png', 1);
-        // this.$refs.imgContainer.innerHTML = `<img src=${canvas.toDataURL('image/png', 1)}>`;
       };
 
       if (this.imgType === 'base64') {
