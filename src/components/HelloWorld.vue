@@ -124,7 +124,7 @@
               </span>
             </p>
             <p>
-              <el-button>下载图片</el-button>
+            <el-button @click="saveAs(imgData)">下载图片</el-button>
             <el-button
               type="primary"
               @click="drawBegin">开始绘制</el-button>
@@ -170,6 +170,22 @@ export default {
     };
   },
   methods: {
+    /**
+     * 触发保存动作
+     * blob:获取的图片blob数据
+     */
+    saveAs(fileUrl, filename = '绘制完成') {
+      const link = document.createElement('a');
+      const body = document.querySelector('body');
+      link.href = fileUrl;
+      link.download = filename;
+      // fix Firefox
+      link.style.display = 'none';
+      body.appendChild(link);
+      link.click();
+      body.removeChild(link);
+      window.URL.revokeObjectURL(link.href);
+    },
     /**
      * 点击头部绘制模式选项卡.
      * @param {*} index - 不同模式的索引值.
