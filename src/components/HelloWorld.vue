@@ -118,14 +118,14 @@
                 <el-input-number
                   v-model="penWidth"
                   size="small"
-                  :min="1"
-                  :max="5">
+                  :min="1">
                 </el-input-number>
               </span>
             </p>
             <p>
             <el-button @click="saveAs(imgData)">下载图片</el-button>
             <el-button
+              :loading="drawing"
               type="primary"
               @click="drawBegin">开始绘制</el-button>
             </p>
@@ -166,7 +166,8 @@ export default {
       imgBase64: '', // 图片的base64
       img: null, // 上传的图片数据
       penColor: 'red', // 画笔颜色
-      penWidth: 3// 画笔粗细
+      penWidth: 3, // 画笔粗细
+      drawing: false
     };
   },
   methods: {
@@ -174,10 +175,10 @@ export default {
      * 触发保存动作
      * blob:获取的图片blob数据
      */
-    saveAs(fileUrl, filename = '绘制完成') {
+    saveAs(blob, filename = '绘制完成') {
       const link = document.createElement('a');
       const body = document.querySelector('body');
-      link.href = fileUrl;
+      link.href = blob;
       link.download = filename;
       // fix Firefox
       link.style.display = 'none';
@@ -238,6 +239,7 @@ export default {
      * @returns.
      */
     drawBegin() {
+      this.drawing = true;
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const img = new Image();
@@ -290,7 +292,10 @@ export default {
             }
           }
         });
-        this.imgData = canvas.toDataURL('image/png', 1);
+        canvas.toBlob((data) => {
+          this.drawing = false;
+          this.imgData = URL.createObjectURL(data);
+        });
       };
 
       if (this.imgType === 'base64') {
